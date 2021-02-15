@@ -1,5 +1,9 @@
 const Modal = {
     open(edit = false){
+
+        //muda o título para edição
+        document.getElementById("modal-title").innerHTML = edit?"Editar Transação":"Nova Transação";
+        
         // Abrir modal
         // Adicionar a class active ao modal
         document
@@ -78,7 +82,7 @@ const Transaction = {
     },
     edit(index) {
       Form.setValues(this.getById(index));
-      Modal.open();
+      Modal.open(true);
     },
     remove(index) {
         Transaction.all.splice(index, 1);
