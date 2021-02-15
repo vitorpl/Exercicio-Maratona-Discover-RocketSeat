@@ -58,6 +58,11 @@ a:hover {
     color: var(--light-green);
 }
 
+.action-icon {
+    
+    cursor: pointer;
+}
+
 button {
     width: 100%;
     height: 50px;

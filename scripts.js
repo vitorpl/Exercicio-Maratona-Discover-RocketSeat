@@ -1,5 +1,5 @@
 const Modal = {
-    open(){
+    open(edit = false){
         // Abrir modal
         // Adicionar a class active ao modal
         document
@@ -62,8 +62,24 @@ const Transaction = {
     add(transaction) {
         Transaction.all.push(transaction);
         App.reload();
-        
+    },
+    update(transaction) {
+        let existTransaction = Transaction.getById(transaction.id) ;
+        existTransaction.id = transaction.id;
+        existTransaction.date = transaction.date;
+        existTransaction.amount = transaction.amount;
+        existTransaction.description = transaction.description;
+        App.reload();
     },    
+    getById(id) {
+        return Transaction.all.find(transaction => {
+            return transaction.id == id;
+        });
+    },
+    edit(index) {
+      Form.setValues(this.getById(index));
+      Modal.open();
+    },
     remove(index) {
         Transaction.all.splice(index, 1);
         App.reload();
@@ -124,7 +140,8 @@ const DOM = {
             <td class="${cssIncomeOrExpense}">${amount}</td>
             <td class="date">${transaction.date}</td>
             <td>
-                <img onclick="Transaction.remove(${index})" src="./assets/minus.svg" alt="Remover transação">
+                <img onclick="Transaction.edit(${transaction.id})" src="./assets/lapis.svg" alt="Editar transação" class="action-icon">
+                <img onclick="Transaction.remove(${index})" src="./assets/minus.svg" alt="Remover transação" class="action-icon">
             </td>
         </tr>
         `;
@@ -169,17 +186,31 @@ const Utils = {
     },
     formatDate(dt) {
         const ds = dt.split("-")
-        return `${ds[2]}/${ds[1]}/${ds[0]}`
+        return `${ds[2]}/${ds[1]}/${ds[0]}`        
+    },
+    strToDate(dt) {
+        const ds = dt.split("/")
+        return `${ds[2]}-${ds[1]}-${ds[0]}`        
     }
 }
 
 const Form = {
+    id: document.querySelector('input#id'),
     description: document.querySelector('input#description'),
     amount: document.querySelector('input#amount'),
     date: document.querySelector('input#date'),
 
+    setValues(transaction) {
+        if(transaction) {
+            document.querySelector('input#id').value = transaction.id;
+            document.querySelector('input#description').value = transaction.description;
+            document.querySelector('input#amount').value = transaction.amount;
+            document.querySelector('input#date').value = Utils.strToDate(transaction.date);
+        }
+    },
     getValues() {
         return {
+            id: Form.id.value,
             description: Form.description.value,
             amount: Form.amount.value,
             date: Form.date.value
@@ -196,13 +227,18 @@ const Form = {
     },
 
     formatValues() {
-        let { description, amount, date } = Form.getValues();
+        let { id, description, amount, date } = Form.getValues();
 
         amount = Utils.formatAmount(amount);
         date = Utils.formatDate(date);
         //alert(Form.getNextIdx());
         console.log(amount)
-        return {id: Form.getNextIdx(), description, amount, date}
+
+        if(id == 0 || !id) {
+            id = Form.getNextIdx();
+        }
+
+        return {id, description, amount, date}
     },
     validateFields() {
         const {description, amount, date} = Form.getValues();
@@ -213,12 +249,18 @@ const Form = {
         }
     },
     clearFields() {
+        Form.id.value = "0"
         Form.description.value = ""
         Form.amount.value = ""
         Form.date.value = ""
     },
     saveTransaction(transaction) {
-        Transaction.add(transaction);
+        if(!Transaction.getById(transaction.id)) {
+            Transaction.add(transaction);
+        }
+        else {
+            Transaction.update(transaction);
+        }
     },
     submit(event) {
         event.preventDefault();
